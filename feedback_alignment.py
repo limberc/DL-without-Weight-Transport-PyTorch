@@ -32,25 +32,11 @@ class LinearFAFunction(Function):
         return grad_input, grad_weight, grad_weight_fa, grad_bias
 
 
-class LinearKPFunction(Function):
-    @staticmethod
-    def forward(context, input, weight, weight_fa, bias=None):
-        context.save_for_backward(input, weight, weight_fa, bias)
-        output = input.matmul(weight.t())
-        if bias is not None:
-            output += bias.unsqueeze(0).expand_as(output)
-        return output
-
+class LinearKPFunction(LinearFAFunction):
     @staticmethod
     def backward(context, grad_output):
         input, weight, weight_fa, bias = context.saved_variables
-        grad_input = grad_weight = grad_weight_fa = grad_bias = None
-        if context.needs_input_grad[0]:
-            grad_input = grad_output.matmul(weight_fa)
-        if context.needs_input_grad[1]:
-            grad_weight = grad_output.t().matmul(input)
-        if bias is not None and context.needs_input_grad[3]:
-            grad_bias = grad_output.sum(0).squeeze(0)
+        grad_input, grad_weight, grad_weight_fa, grad_bias = LinearFAFunction.backward(context, grad_output)
         # Update the backward matrices of the Kolen-Pollack algorithm
         grad_weight_fa = weight_fa - weight
 
