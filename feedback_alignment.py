@@ -19,7 +19,8 @@ class LinearFAFunction(Function):
         grad_input = grad_weight = grad_weight_fa = grad_bias = None
         if context.needs_input_grad[0]:
             # all of the logic of FA resides in this one line
-            # calculate the gradient of input with fixed fa tensor, rather than the "correct" model weight
+            # calculate the gradient of input with fixed fa tensor,
+            # rather than the "correct" model weight
             grad_input = grad_output.matmul(weight_fa)
         if context.needs_input_grad[1]:
             # grad for weight with FA'ed grad_output from downstream layer
@@ -31,10 +32,34 @@ class LinearFAFunction(Function):
         return grad_input, grad_weight, grad_weight_fa, grad_bias
 
 
-class FeedbackAlignmentLinear(nn.Module):
+class LinearKPFunction(Function):
+    @staticmethod
+    def forward(context, input, weight, weight_fa, bias=None):
+        context.save_for_backward(input, weight, weight_fa, bias)
+        output = input.matmul(weight.t())
+        if bias is not None:
+            output += bias.unsqueeze(0).expand_as(output)
+        return output
 
+    @staticmethod
+    def backward(context, grad_output):
+        input, weight, weight_fa, bias = context.saved_variables
+        grad_input = grad_weight = grad_weight_fa = grad_bias = None
+        if context.needs_input_grad[0]:
+            grad_input = grad_output.matmul(weight_fa)
+        if context.needs_input_grad[1]:
+            grad_weight = grad_output.t().matmul(input)
+        if bias is not None and context.needs_input_grad[3]:
+            grad_bias = grad_output.sum(0).squeeze(0)
+        # Update the backward matrices of the Kolen-Pollack algorithm
+        grad_weight_fa = weight_fa - weight
+
+        return grad_input, grad_weight, grad_weight_fa, grad_bias
+
+
+class FALinear(nn.Module):
     def __init__(self, input_features, output_features, bias=True):
-        super(FeedbackAlignmentLinear, self).__init__()
+        super(FALinear, self).__init__()
         self.input_features = input_features
         self.output_features = output_features
 
@@ -57,3 +82,8 @@ class FeedbackAlignmentLinear(nn.Module):
 
     def forward(self, input):
         return LinearFAFunction.apply(input, self.weight, self.weight_fa, self.bias)
+
+
+class KPLinear(FALinear):
+    def forward(self, input):
+        return LinearKPFunction.apply(input, self.weight, self.weight_fa, self.bias)

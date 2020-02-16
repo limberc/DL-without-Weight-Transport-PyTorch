@@ -11,7 +11,7 @@ from torchvision import transforms
 from torchvision.datasets import CIFAR10
 from utils.bar_show import progress_bar
 
-from feedback_alignment import FeedbackAlignmentLinear
+from feedback_alignment import KPLinear, FALinear
 
 parser = argparse.ArgumentParser(description='DL without Weight Transport PyTorch Implementation.')
 
@@ -64,10 +64,16 @@ def get_dataloader(root, batch_szie, num_workers):
 
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, method):
         super(Model, self).__init__()
-        self.fc1 = FeedbackAlignmentLinear(3 * 32 * 32, 120)
-        self.fc2 = FeedbackAlignmentLinear(120, 10)
+        if method == 'fa':
+            linear = FALinear
+        elif method == 'kp':
+            linear = KPLinear
+        else:
+            NameError("Linear Type not Implement")
+        self.fc1 = linear(3 * 32 * 32, 120)
+        self.fc2 = linear(120, 10)
 
     def forward(self, x):
         print(x.shape)
@@ -81,7 +87,7 @@ def main():
     train_loader, eval_loader = get_dataloader(cfg.data_dir, cfg.b, cfg.num_workers)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    model = Model().to(device)
+    model = Model(cfg.method).to(device)
 
     if device == 'cuda':
         model = torch.nn.DataParallel(model)
