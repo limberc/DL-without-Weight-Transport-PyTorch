@@ -1,0 +1,8 @@
+.idea
+zzz*
+__pycache__
+data/
+ckpt/
+logs/
+slurm-*.out
+

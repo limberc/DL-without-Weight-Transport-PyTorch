@@ -40,6 +40,8 @@ class LinearKPFunction(LinearFAFunction):
         # Update the backward matrices of the Kolen-Pollack algorithm
         grad_weight_fa = weight_fa - weight
 
+        # Update the backward matrices of the Kolen-Pollack algorithm
+        grad_weight_fa = grad_weight
         return grad_input, grad_weight, grad_weight_fa, grad_bias
 
 
@@ -59,7 +61,7 @@ class FALinear(nn.Module):
 
         # fixed random weight and bias for FA backward pass
         # does not need gradient
-        self.weight_fa = torch.rand(output_features, input_features, requires_grad=False).cuda()
+        self.weight_fa = nn.Parameter(torch.rand(output_features, input_features, requires_grad=False).cuda())
         # self.weight_fa = Variable(torch.Tensor(output_features, input_features), requires_grad=False)
         # weight initialization
         torch.nn.init.kaiming_uniform_(self.weight)

@@ -28,6 +28,7 @@ parser.add_argument('--eval_batch_size', type=int, default=100)
 parser.add_argument('--max_epochs', type=int, default=180)
 parser.add_argument('--log_interval', type=int, default=40)
 parser.add_argument('--num_workers', type=int, default=12)
+parser.add_argument('--lam', type=float, default=0.9)
 
 cfg = parser.parse_args()
 
@@ -92,7 +93,6 @@ def main():
     if device == 'cuda':
         model = torch.nn.DataParallel(model)
         cudnn.benchmark = True
-
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=1e-4, momentum=0.9, weight_decay=0.001, nesterov=True)
     criterion = torch.nn.CrossEntropyLoss()
