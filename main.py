@@ -93,13 +93,8 @@ def main():
     if device == 'cuda':
         model = torch.nn.DataParallel(model)
         cudnn.benchmark = True
-    if cfg.method == 'fa':
-        optimizer = torch.optim.SGD(model.parameters(),
-                                    lr=1e-4, momentum=0.9, weight_decay=0.001, nesterov=True)
-    elif cfg.method == 'kp':
-        optimizer = torch.optim.SGD(model.parameters(),
-                                    lr=1e-4 / cfg.lam, momentum=0.9,
-                                    weight_decay=0.001, nesterov=True)
+    optimizer = torch.optim.SGD(model.parameters(),
+                                lr=1e-4, momentum=0.9, weight_decay=0.001, nesterov=True)
     criterion = torch.nn.CrossEntropyLoss()
     lr_schedu = torch.optim.lr_scheduler.MultiStepLR(optimizer, [90, 150, 200], gamma=0.1)
     summary_writer = SummaryWriter(cfg.log_dir)
@@ -125,9 +120,6 @@ def main():
             loss = criterion(outputs, targets)
             loss.backward()  # compute the .grad for all weights
             optimizer.step()
-            if cfg.method == 'KP':
-                for parameter in model.parameters():
-                    parameter.data *= cfg.lam
 
             train_loss += loss.item()
             _, predicted = outputs.max(1)
