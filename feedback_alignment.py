@@ -40,6 +40,8 @@ class LinearKPFunction(LinearFAFunction):
         # Update the backward matrices of the Kolen-Pollack algorithm
         grad_weight_fa = weight_fa - weight
 
+        # Update the backward matrices of the Kolen-Pollack algorithm
+        grad_weight_fa = grad_weight
         return grad_input, grad_weight, grad_weight_fa, grad_bias
 
 
