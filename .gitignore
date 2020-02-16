@@ -1,2 +1,6 @@
 .idea
 zzz*
+__pycache__
+data/
+ckpt/
+logs/
