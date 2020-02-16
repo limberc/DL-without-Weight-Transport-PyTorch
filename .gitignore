@@ -4,3 +4,5 @@ __pycache__
 data/
 ckpt/
 logs/
+slurm-*.out
+

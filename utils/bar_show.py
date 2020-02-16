@@ -22,8 +22,10 @@ def get_mean_and_std(dataset):
     return mean, std
 
 
-_, term_width = os.popen('stty size', 'r').read().split()
-term_width = int(term_width)
+#_, term_width = os.popen('stty size', 'r').read().split()
+#term_width = int(term_width)
+term_width = 80     # This was buggy on cluster
+
 
 TOTAL_BAR_LENGTH = 45.
 last_time = time.time()
