@@ -130,7 +130,7 @@ def main():
 
             if cfg.method == 'kp':
                 for param in model.parameters():
-                    param *= cfg.kp_decay
+                    param.data.mul_(cfg.kp_decay)
 
             train_loss += loss.item()
             _, predicted = outputs.max(1)
