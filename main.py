@@ -96,6 +96,7 @@ def main():
         model = torch.nn.DataParallel(model)
         cudnn.benchmark = True
     if cfg.method == 'kp':
+        print('CP with decay: ', cfg.kp_decay)
         optimizer = torch.optim.SGD(model.parameters(),
                                     lr=1e-4 / cfg.kp_decay, momentum=0.9, weight_decay=0.001, nesterov=True)
     else:
