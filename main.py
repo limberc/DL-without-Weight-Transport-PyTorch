@@ -71,6 +71,8 @@ class Model(nn.Module):
             linear = FALinear
         elif method == 'kp':
             linear = KPLinear
+        elif method == 'bp':
+            linear = torch.nn.Linear
         else:
             NameError("Linear Type not Implement")
         self.fc1 = linear(3 * 32 * 32, 120)
