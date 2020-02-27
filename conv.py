@@ -11,12 +11,13 @@ from torch.nn.modules.utils import _pair
 class KPConvFunction(Function):
     @staticmethod
     def forward(ctx, input, weight, weight_fa, bias=None, stride=1, padding=0, dilation=1, groups=1):
-        output = F.conv2d(input, weight, bias, stride, padding, dilation, groups)
         ctx.save_for_backward(input, weight, weight_fa, bias)
         ctx.stride = stride
         ctx.padding = padding
         ctx.dilation = dilation
         ctx.groups = groups
+        output = F.conv2d(input, weight=weight, bias=bias, stride=stride, padding=padding,
+                          dilation=dilation, groups=groups)
         return output
 
     @staticmethod
