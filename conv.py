@@ -127,8 +127,8 @@ class KPConv2d(_KPConvNd):
                                 (self.padding[0] + 1) // 2, self.padding[0] // 2)
 
             return KPConvFunction.apply(F.pad(input, expanded_padding, mode='circular'),
-                                        self.weight, self.bias, self.stride,
+                                        self.weight, self.weight_fa, self.bias, self.stride,
                                         _pair(0), self.dilation, self.groups)
         else:
-            return KPConvFunction.apply(input, self.weight, self.bias, self.stride,
+            return KPConvFunction.apply(input, self.weight, self.weight_fa, self.bias, self.stride,
                                         self.padding, self.dilation, self.groups)
