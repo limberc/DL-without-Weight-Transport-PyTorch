@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-from conv import KPConv
 from linear import KPLinear
+from test_conv import Conv2dShift
 
 
 class BasicBlock(nn.Module):
@@ -20,10 +20,10 @@ class BasicBlock(nn.Module):
 
         # residual function
         self.residual_function = nn.Sequential(
-            KPConv(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            Conv2dShift(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            KPConv(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
+            Conv2dShift(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels * BasicBlock.expansion)
         )
 
@@ -34,7 +34,7 @@ class BasicBlock(nn.Module):
         # use 1*1 convolution to match the dimension
         if stride != 1 or in_channels != BasicBlock.expansion * out_channels:
             self.shortcut = nn.Sequential(
-                KPConv(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
+                Conv2dShift(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_channels * BasicBlock.expansion)
             )
 

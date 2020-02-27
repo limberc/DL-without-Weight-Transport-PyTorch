@@ -17,7 +17,7 @@ from utils.bar_show import progress_bar
 parser = argparse.ArgumentParser(description='KP Implementation')
 parser.add_argument('--root_dir', type=str, default="asymmetric_dorefa")
 parser.add_argument('--data_dir', type=str, default='./data')
-parser.add_argument('--log_name', type=str, default='asy_dorefa_res18_8w8a')
+parser.add_argument('--log_name', type=str, default='res18')
 parser.add_argument('--pretrain', action='store_true', default=False)
 parser.add_argument('--pretrain_dir', type=str, default='CIFAR100_pretrain')
 parser.add_argument('--model', type=str, default='res18', required=True)
@@ -60,12 +60,12 @@ def main():
 
     print('===> Preparing data ..')
     train_dataset = dataset(root=cfg.data_dir, train=True, download=True,
-                            transform=cifar_transform(cifar=cfg.cifar, is_training=True))
+                            transform=cifar_transform(cifar=100, is_training=True))
     train_loader = DataLoader(train_dataset, batch_size=cfg.b, shuffle=True,
                               num_workers=cfg.num_workers, pin_memory=True)
 
     eval_dataset = dataset(root=cfg.data_dir, train=False, download=True,
-                           transform=cifar_transform(cifar=cfg.cifar, is_training=False))
+                           transform=cifar_transform(cifar=100, is_training=False))
     eval_loader = DataLoader(eval_dataset, batch_size=cfg.b, shuffle=False,
                              num_workers=cfg.num_workers, pin_memory=True)
 
