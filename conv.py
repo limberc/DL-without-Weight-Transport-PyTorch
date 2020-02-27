@@ -8,7 +8,7 @@ from torch.nn import init
 from torch.nn.modules.utils import _pair
 
 
-class KPConvFunction(Function):
+class FAConvFunction(Function):
     @staticmethod
     def forward(ctx, input, weight, weight_fa, bias=None, stride=1, padding=0, dilation=1, groups=1):
         ctx.save_for_backward(input, weight, weight_fa, bias)
@@ -29,26 +29,37 @@ class KPConvFunction(Function):
         groups = ctx.groups
         grad_input = grad_weight = grad_weight_fa = grad_bias = None
         if ctx.needs_input_grad[0]:
-            grad_input = torch.nn.grad.conv2d_input(input.shape, weight, grad_output, stride, padding, dilation, groups)
+            # calculate the gradient of input with fixed fa tensor,
+            # rather than the "correct" model weight
+            grad_input = torch.nn.grad.conv2d_input(input.shape, weight_fa, grad_output, stride, padding, dilation,
+                                                    groups)
         if ctx.needs_input_grad[1]:
-            grad_weight = torch.nn.grad.conv2d_weight(input, weight.shape, grad_output, stride, padding, dilation,
+            # grad for weight with FA'ed grad_output from downstream layer
+            # it is same with original linear function
+            grad_weight = torch.nn.grad.conv2d_weight(input, weight_fa.shape, grad_output, stride, padding, dilation,
                                                       groups)
         if bias is not None and ctx.needs_input_grad[2]:
             grad_bias = grad_output.sum((0, 2, 3)).squeeze(0)
 
-        # Update the backward matrices of the Kolen-Pollack algorithm
+        return grad_input, grad_weight, grad_weight_fa, grad_bias, None, None, None, None
+
+
+class KPConvFunction(FAConvFunction):
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_input, grad_weight, grad_weight_fa, grad_bias = FAConvFunction.backward(ctx, grad_output)
         grad_weight_fa = grad_weight
 
         return grad_input, grad_weight, grad_weight_fa, grad_bias, None, None, None, None
 
 
-class _KPConvNd(nn.Module):
+class _FAConvNd(nn.Module):
     __constants__ = ['stride', 'padding', 'dilation', 'groups', 'bias', 'padding_mode']
 
     def __init__(self, in_channels, out_channels, kernel_size, stride,
                  padding, dilation, transposed, output_padding,
                  groups, bias, padding_mode, check_grad=False):
-        super(_KPConvNd, self).__init__()
+        super(_FAConvNd, self).__init__()
         if in_channels % groups != 0:
             raise ValueError('in_channels must be divisible by groups')
         if out_channels % groups != 0:
@@ -108,7 +119,7 @@ class _KPConvNd(nn.Module):
         return s.format(**self.__dict__)
 
 
-class KPConv2d(_KPConvNd):
+class FAConv2d(_FAConvNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
                  padding=0, dilation=1, groups=1,
                  bias=True, padding_mode='zeros'):
@@ -116,11 +127,25 @@ class KPConv2d(_KPConvNd):
         stride = _pair(stride)
         padding = _pair(padding)
         dilation = _pair(dilation)
-        super(KPConv2d, self).__init__(
+        super(FAConv2d, self).__init__(
             in_channels, out_channels, kernel_size, stride, padding, dilation,
             False, _pair(0), groups, bias, padding_mode)
 
     # @weak_script_method
+    def forward(self, input):
+        if self.padding_mode == 'circular':
+            expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
+                                (self.padding[0] + 1) // 2, self.padding[0] // 2)
+
+            return FAConvFunction.apply(F.pad(input, expanded_padding, mode='circular'),
+                                        self.weight, self.weight_fa, self.bias, self.stride,
+                                        _pair(0), self.dilation, self.groups)
+        else:
+            return FAConvFunction.apply(input, self.weight, self.weight_fa, self.bias, self.stride,
+                                        self.padding, self.dilation, self.groups)
+
+
+class KPConv2d(_FAConvNd):
     def forward(self, input):
         if self.padding_mode == 'circular':
             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
