@@ -73,7 +73,8 @@ def main():
         model = torch.nn.DataParallel(model)
         cudnn.benchmark = True
 
-    # optimizer = torch.optim.SGD(model.parameters(), lr=cfg.lr, momentum=0.9, weight_decay=cfg.wd)
+    # To note that the lr is not real lr. We are using KP update.
+    # This approach would help us to get rid of new optim implementation.
     optimizer = torch.optim.SGD(model.parameters(), lr=cfg.lr / cfg.kp_decay, momentum=0.9, weight_decay=cfg.wd)
     # optimizer = torch.optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.wd)
     lr_schedu = optim.lr_scheduler.MultiStepLR(optimizer, [90, 150, 200], gamma=0.1)
@@ -103,6 +104,7 @@ def main():
             loss.backward()  # compute the .grad for all weights
             optimizer.step()
 
+            # Update KP weight decay.
             for param in model.parameters():
                 param.data.mul_(cfg.kp_decay)
 
