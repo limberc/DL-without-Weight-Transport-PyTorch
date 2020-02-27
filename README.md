@@ -6,9 +6,9 @@ Current algorithms for deep learning probably cannot run in the brain because th
 
 ## Usage
 
-`python main.py --method {kp/fa} --log_name {your_log_name}`
+`python main.py --model res18 --log_name {your_log_name}`
 
-The experiments is adopted for CIFAR10.
+The experiments is adopted for CIFAR100.
 
 ## The two new proposed algorithms
 
