@@ -145,7 +145,7 @@ class FAConv2d(_FAConvNd):
                                         self.padding, self.dilation, self.groups)
 
 
-class KPConv2d(_FAConvNd):
+class KPConv2d(FAConv2d):
     def forward(self, input):
         if self.padding_mode == 'circular':
             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
