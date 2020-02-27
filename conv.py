@@ -9,6 +9,7 @@ from torch.nn.modules.utils import _pair
 
 
 class KPConvFunction(Function):
+    @staticmethod
     def forward(ctx, input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
         output = F.conv2d(input, weight, bias, stride, padding, dilation, groups)
         ctx.save_for_backward(input, weight, bias)
@@ -19,6 +20,7 @@ class KPConvFunction(Function):
 
         return output
 
+    @staticmethod
     def backward(ctx, grad_output):
         input, weight, weight_fa, bias = ctx.saved_variables
         stride = ctx.stride
