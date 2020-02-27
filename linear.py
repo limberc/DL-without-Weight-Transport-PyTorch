@@ -32,7 +32,7 @@ class LinearFAFunction(Function):
         return grad_input, grad_weight, grad_weight_fa, grad_bias
 
 
-class LinearKPFunction(Function):
+class LinearKPFunction(LinearFAFunction):
     @staticmethod
     def backward(context, grad_output):
         grad_input, grad_weight, grad_weight_fa, grad_bias = LinearFAFunction.backward(context, grad_output)
@@ -69,5 +69,8 @@ class FALinear(nn.Module):
 
 
 class KPLinear(FALinear):
+    def __init__(self, input_features, output_features, bias=True):
+        super().__init__(input_features, output_features, bias)
+
     def forward(self, input):
         return LinearKPFunction.apply(input, self.weight, self.weight_fa, self.bias)

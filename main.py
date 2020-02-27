@@ -15,12 +15,12 @@ from utils.bar_show import progress_bar
 
 # Training settings
 parser = argparse.ArgumentParser(description='KP Implementation')
-parser.add_argument('--root_dir', type=str, default="asymmetric_dorefa")
+parser.add_argument('--root_dir', type=str, default=".")
 parser.add_argument('--data_dir', type=str, default='./data')
 parser.add_argument('--log_name', type=str, default='res18')
 parser.add_argument('--pretrain', action='store_true', default=False)
 parser.add_argument('--pretrain_dir', type=str, default='CIFAR100_pretrain')
-parser.add_argument('--model', type=str, default='res18', required=True)
+parser.add_argument('--model', type=str, default='res18')
 
 parser.add_argument('--lr', type=float, default=0.1)
 parser.add_argument('--wd', type=float, default=5e-4)
