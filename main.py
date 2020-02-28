@@ -49,11 +49,11 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if cfg.model == 'res18':
         from resnet import resnet18
-        model = resnet18().to(device)
+        model = resnet18(cfg.method).to(device)
         print("Runing Baseline ResNet18")
     elif cfg.model == 'res50':
         from resnet import resnet50
-        model = resnet50().to(device)
+        model = resnet50(cfg.method).to(device)
         print("Runing Baseline ResNet50")
     else:
         assert False, 'Model Unknown !'
