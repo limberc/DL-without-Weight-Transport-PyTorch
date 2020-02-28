@@ -1,7 +1,17 @@
 import torch.nn as nn
 
-from linear import KPLinear
 from conv import KPConv2d
+from linear import KPLinear
+
+
+def get_conv_linear(type):
+    if type != 'kp':
+        conv = nn.Conv2d
+        linear = nn.Linear
+    else:
+        conv = KPConv2d
+        linear = KPLinear
+    return conv, linear
 
 
 class BasicBlock(nn.Module):
@@ -15,15 +25,16 @@ class BasicBlock(nn.Module):
     # to distinct
     expansion = 1
 
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels, out_channels, stride=1, type='kp'):
         super().__init__()
+        conv, linear = get_conv_linear(type)
 
         # residual function
         self.residual_function = nn.Sequential(
-            KPConv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            conv(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            KPConv2d(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
+            conv(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels * BasicBlock.expansion)
         )
 
@@ -34,7 +45,7 @@ class BasicBlock(nn.Module):
         # use 1*1 convolution to match the dimension
         if stride != 1 or in_channels != BasicBlock.expansion * out_channels:
             self.shortcut = nn.Sequential(
-                KPConv2d(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
+                conv(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_channels * BasicBlock.expansion)
             )
 
@@ -47,16 +58,17 @@ class BottleNeck(nn.Module):
     """
     expansion = 4
 
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels, out_channels, stride=1, type='kp'):
         super().__init__()
+        conv, linear = get_conv_linear(type)
         self.residual_function = nn.Sequential(
-            KPConv2d(in_channels, out_channels, kernel_size=1, bias=False),
+            conv(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            KPConv2d(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
+            conv(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            KPConv2d(out_channels, out_channels * BottleNeck.expansion, kernel_size=1, bias=False),
+            conv(out_channels, out_channels * BottleNeck.expansion, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels * BottleNeck.expansion),
         )
 
@@ -64,7 +76,7 @@ class BottleNeck(nn.Module):
 
         if stride != 1 or in_channels != out_channels * BottleNeck.expansion:
             self.shortcut = nn.Sequential(
-                KPConv2d(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
+                conv(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
                 nn.BatchNorm2d(out_channels * BottleNeck.expansion)
             )
 
@@ -73,13 +85,13 @@ class BottleNeck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_block, num_classes=100):
+    def __init__(self, block, num_block, num_classes=100, type='kp'):
         super().__init__()
-
         self.in_channels = 64
-
+        self.type = type
+        conv, linear = get_conv_linear(type)
         self.conv1 = nn.Sequential(
-            KPConv2d(3, 64, kernel_size=3, padding=1, bias=False),
+            conv(3, 64, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True))
         # we use a different inputsize than the original paper
@@ -89,8 +101,7 @@ class ResNet(nn.Module):
         self.conv4_x = self._make_layer(block, 256, num_block[2], 2)
         self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = KPLinear(512 * block.expansion, num_classes)
-        # self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.fc = linear(512 * block.expansion, num_classes)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         """make resnet layers(by layer i didnt mean this 'layer' was the
@@ -112,7 +123,7 @@ class ResNet(nn.Module):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_channels, out_channels, stride))
+            layers.append(block(self.in_channels, out_channels, stride, self.type))
             self.in_channels = out_channels * block.expansion
 
         return nn.Sequential(*layers)
@@ -130,31 +141,31 @@ class ResNet(nn.Module):
         return output
 
 
-def resnet18():
+def resnet18(type):
     """ return a ResNet 18 object
     """
-    return ResNet(BasicBlock, [2, 2, 2, 2])
+    return ResNet(BasicBlock, [2, 2, 2, 2], type=type)
 
 
-def resnet34():
+def resnet34(type):
     """ return a ResNet 34 object
     """
-    return ResNet(BasicBlock, [3, 4, 6, 3])
+    return ResNet(BasicBlock, [3, 4, 6, 3], type=type)
 
 
-def resnet50():
+def resnet50(type):
     """ return a ResNet 50 object
     """
-    return ResNet(BottleNeck, [3, 4, 6, 3])
+    return ResNet(BottleNeck, [3, 4, 6, 3], type=type)
 
 
-def resnet101():
+def resnet101(type):
     """ return a ResNet 101 object
     """
-    return ResNet(BottleNeck, [3, 4, 23, 3])
+    return ResNet(BottleNeck, [3, 4, 23, 3], type=type)
 
 
-def resnet152():
+def resnet152(type):
     """ return a ResNet 152 object
     """
-    return ResNet(BottleNeck, [3, 8, 36, 3])
+    return ResNet(BottleNeck, [3, 8, 36, 3], type=type)

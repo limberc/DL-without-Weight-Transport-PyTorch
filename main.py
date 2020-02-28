@@ -21,6 +21,7 @@ parser.add_argument('--log_name', type=str, default='res18')
 parser.add_argument('--pretrain', action='store_true', default=False)
 parser.add_argument('--pretrain_dir', type=str, default='CIFAR100_pretrain')
 parser.add_argument('--model', type=str, default='res18')
+parser.add_argument('--method', type=str, default='kp')
 
 parser.add_argument('--lr', type=float, default=0.1)
 parser.add_argument('--wd', type=float, default=5e-4)
@@ -49,11 +50,11 @@ def main():
     if cfg.model == 'res18':
         from resnet import resnet18
         model = resnet18().to(device)
-        print("Runing Baseline ResNet18 (Full Precision)")
+        print("Runing Baseline ResNet18")
     elif cfg.model == 'res50':
         from resnet import resnet50
         model = resnet50().to(device)
-        print("Runing Baseline ResNet50 (Full Precision)")
+        print("Runing Baseline ResNet50")
     else:
         assert False, 'Model Unknown !'
     dataset = torchvision.datasets.CIFAR100
