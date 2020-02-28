@@ -47,7 +47,8 @@ class FAConvFunction(Function):
 class KPConvFunction(FAConvFunction):
     @staticmethod
     def backward(ctx, grad_output):
-        grad_input, grad_weight, grad_weight_fa, grad_bias = FAConvFunction.backward(ctx, grad_output)
+        grad_input, grad_weight, grad_weight_fa, grad_bias, stride, padding, dilation, groups = FAConvFunction.backward(
+            ctx, grad_output)
         grad_weight_fa = grad_weight
 
         return grad_input, grad_weight, grad_weight_fa, grad_bias, None, None, None, None
